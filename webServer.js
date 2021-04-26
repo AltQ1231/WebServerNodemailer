@@ -3,6 +3,7 @@
 // global.servicePass = "ZCANBDURWMKBQNAP";
 global.serviceEmailAddress = "2783956045@qq.com";
 global.servicePass = "zshfnkoxosyfdhbh";
+global.captchaNum = null;
 
 const nodemailer = require("nodemailer");
 const moment = require("moment");
@@ -36,38 +37,70 @@ const server = app.listen(5000, function () {
     console.log("Express app server listening on port %d", server.address().port);
 });
 
-app.get("/getCaptcha", (req, res) => {
-    console.log("server", req.query);
+app.get("/sendEmailCaptcha", (req, res) => {
+    // global.captchaNum = crypto.randomInt(99999, 1000000);
+    console.log("server", req.query, global.captchaNum);
+    //将结果返回给客户端
+    // res.send({
+    //     resCode: 200,
+    //     data: {
+    //         msg: "邮件发送成功~",
+    //         sendTime: moment().format("YYYY-MM-DD hh:mm:ss"),
+    //     },
+    // });
 
     sendMailFunc(req.query.emailAddress, (result) => {
         if (result.isSend) {
             console.log(111, result);
+            global.captchaNum = result.captchaNum;
             //将结果返回给客户端
             res.send({
                 resCode: 200,
-                data: result,
+                data: { msg: result.msg, sendTime: result.sendTime },
             });
         } else {
             console.log(222, result);
             //将结果返回给客户端
             res.send({
                 resCode: 500,
-                data: result,
+                data: { msg: result.msg, sendTime: result.sendTime },
             });
         }
     });
 });
 
+app.get("/verificationCode", (req, res) => {
+    console.log("server", req.query, global.captchaNum);
+
+    if (Number(req.query.captcha) === Number(global.captchaNum)) {
+        //将结果返回给客户端
+        res.send({
+            resCode: 200,
+            data: {
+                msg: `欢迎你 ${req.query.emailAddress}`,
+                user: req.query.emailAddress,
+            },
+        });
+    } else {
+        //将结果返回给客户端
+        res.send({
+            resCode: 220,
+            data: { msg: "验证码错误" },
+        });
+    }
+});
+
 function sendMailFunc(customAddress, sendCaptchaInfo) {
     // 获取当前时间
-    let sendTime = moment().format("MMMM Do YYYY, h:mm:ss a");
+    let sendTime = moment().format("YYYY-MM-DD hh:mm:ss");
 
     const captchaNum = crypto.randomInt(99999, 1000000);
 
     let resultData = {
-        isSend: false,
+        isSend: true,
         msg: "邮件发送成功~",
-        captcha: sendTime,
+        sendTime: sendTime,
+        captchaNum: captchaNum,
     };
     console.log(captchaNum, customAddress);
     nodemailer.createTestAccount((err, account) => {
@@ -114,10 +147,10 @@ function sendMailFunc(customAddress, sendCaptchaInfo) {
             if (error) {
                 resultData.isSend = false;
                 resultData.msg = "邮件发送失败，请稍后再试";
+                resultData.captchaNum = null;
                 sendCaptchaInfo(resultData);
                 return console.log(error);
             }
-            resultData.isSend = true;
             sendCaptchaInfo(resultData);
         });
     });
