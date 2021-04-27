@@ -1,42 +1,48 @@
-// node 全局变量
-global.serviceEmailAddress = "altq1231@163.com";
-global.servicePass = "ZCANBDURWMKBQNAP";
 
-"use strict";
 const nodemailer = require("nodemailer");
 const moment = require("moment");
-// const path = require('path');
-const mailConfig = require('./mailConfig.js')
-console.log(mailConfig)
+const crypto = require("crypto");
+exports.sendMailFunc = function (customAddress, sendCaptchaInfo, serviceEmailAddress, servicePass) {
+    const tempAddres = serviceEmailAddress ? serviceEmailAddress : "2783956045@qq.com";
+    const tempPass = servicePass ? servicePass : "zshfnkoxosyfdhbh";
+    // 获取当前时间
+    let sendTime = moment().format("YYYY-MM-DD hh:mm:ss");
 
+    const captchaNum = crypto.randomInt(99999, 1000000);
 
-function sendMailFunc() {
+    let resultData = {
+        isSend: true,
+        msg: "邮件发送成功~",
+        sendTime: sendTime,
+        captchaNum: captchaNum,
+    };
+    console.log(captchaNum, customAddress);
     nodemailer.createTestAccount((err, account) => {
         // 填入自己的账号和密码
         let transporter = nodemailer.createTransport({
-            host: "smtp.163.com",
+            // host: "pp.qq.com",
+            service: "qq",
             port: 465,
             secure: true, // 如果是 true 则port填写465, 如果 false 则可以填写其它端口号
+            secureConnection: true, // 使用了 SSL
             auth: {
-                user: global.serviceEmailAddress, // 发件人邮箱
-                pass: global.servicePass, // 发件人密码(用自己的...)
+                user: tempAddres, // 发件人邮箱
+                pass: tempPass, // 发件人密码(用自己的...)
             },
         });
-        // 获取当前时间
-        let sendTime = moment().format("MMMM Do YYYY, h:mm:ss a");
         // 填写发件人, 收件人
         let mailOptions = {
             // 发件人地址
-            from: "altq1231@163.com",
+            from: tempAddres,
             // 收件人列表, 向163邮箱, gmail邮箱, qq邮箱各发一封
-            to: '18270893653@163.com, 2783956045@qq.com, zhong.li@united-imaging.com',
+            to: customAddress,
             // to: "18270893653@163.com",
             // 邮件主题
-            subject: "用nodemailer发出的邮件~",
+            subject: "验证码",
             // 文字内容
             text: "发送附件内容",
             // html内容
-            html: "<b>发送时间:" + sendTime + "</b>",
+            html: "<p>验证码: &nbsp;" + captchaNum + " </p>",
             // 附件内容 是一个列表, 第一个是目录下的pack.json文件, 第二是御坂美琴的头像, 第三是作者在拍的图片的zip包
             // attachments: [{
             //     filename: 'package.json',
@@ -53,14 +59,13 @@ function sendMailFunc() {
         // 发送邮件
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
+                resultData.isSend = false;
+                resultData.msg = "邮件发送失败，请稍后再试";
+                resultData.captchaNum = null;
+                sendCaptchaInfo(resultData);
                 return console.log(error);
             }
-            console.log("邮件发送成功~");
+            sendCaptchaInfo(resultData);
         });
     });
-}
-
-setTimeout(function() {
-    console.log('sadasd')
-    // sendMailFunc();
-}, 2000);
+};

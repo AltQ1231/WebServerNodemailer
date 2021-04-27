@@ -1,17 +1,19 @@
-# WebServerNodemailer
-使用nodemailer 的邮件发送验证码项目
+# express project
 
-
-## 启动
+## Getting Started
 
 Install dependencies,
 
 ```bash
- npm install
+  npm install
 ```
 
-Start the server,
+Start the dev server,
 
 ```bash
- node ./webServer.js
+  npm start
+```
+
+```bash
+ 需要使用本地node服务器 5400端口 用于发送邮件验证码
 ```
