@@ -8,7 +8,7 @@ Install dependencies,
   npm install
 ```
 
-Start the dev server,
+Start the server,
 
 ```bash
   npm start
